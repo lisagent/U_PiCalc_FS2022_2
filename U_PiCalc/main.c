@@ -20,7 +20,6 @@
 #include "queue.h"
 #include "event_groups.h"
 #include "stack_macros.h"
-//#include "semphr. h"
 
 #include "mem_check.h"
 
@@ -32,22 +31,25 @@
 #include "ButtonHandler.h"
 #include "avr_f64.h"
 
-//SemaphoreHandle_t MeinMutex; //A-Ressource
-uint8_t Datenuebertragung; //B-Ressource
-
 float pi4;
 float pi;
+float pi_x;
 float piN;
 float pi_l;
 float64_t pi_n;
-int action;
+uint32_t datenuebertragung;
 
 //Eventgroup erstellen
 EventGroupHandle_t EventGroupPiCalc;
-#define StartTask		1<<0
-#define StopTask		1<<1
-#define ResetTask		 1<<2
-#define WechsleTask		1<<3
+#define StartTask			1<<0
+#define StopTask			1<<1
+#define ResetTask			1<<2
+#define WechsleLeibniz		1<<3
+#define WechsleNilakantha	1<<4
+//#define UebertragungsReset	1<<5
+//#define Datensperren		1<<6
+//#define daten_bereit		1<<7
+//#define daten_cleared		1<<8
 #define PiCalc_Reset	0x03FC
 
 
@@ -82,16 +84,32 @@ void leibniz_task(void* pvParameters){
 	pi4 = 1;
 	uint32_t zaehler = 3;
 	float pi = 0;
+	//char pistring[12];
+	//uint32_t fivehundertmillisecondscounter = 0;
  for (;;) {
 	//action = xEventGroupWaitBits (EventGroupPiCalc, StartLeibniz,pdTRUE,pdFALSE, portMAX_DELAY);
 	//if ((action & StartLeibniz) !=0 ){
-	if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
+	//if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
 		pi4 = pi4-(1.0/zaehler);
 		 zaehler += 2;
 		pi4 = pi4 +(1.0/zaehler);
 		zaehler += 2;
-		pi_l = pi4*4;
-	}	// else {
+		pi_l = pi4*4;	
+		vTaskDelay(10/portTICK_RATE_MS);
+		//}
+	}
+ }
+	
+		//vDisplayClear();
+		//vDisplayWriteStringAtPos(0,0,"Leibniz-Task");
+			//vDisplayClear();
+			//vDisplayWriteStringAtPos(0,0,"Leibniz-Task");
+			//sprintf(&pistring[0], "PI: %.8f", pi_x);
+			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
+			//sprintf(&pistring[0], "PI_N: %.8f", pi_n);
+			//vDisplayWriteStringAtPos(2,0, "%s", pistring);
+
+		// else {
 		//if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
 		//pi_l = 45621;
 	//}
@@ -103,27 +121,57 @@ void leibniz_task(void* pvParameters){
 		//
 		//vTaskDelay(10/portTICK_RATE_MS);
 
-	}
+	//}
 	//xEventGroupClearBits(EventGroupPiCalc, StartTask);
 	// informiere_task();
 	 //warte_hier();
 // }
-}
+//}
 
 void Nilakantha_task(void* pvParameters){
 	piN = 3;
 	uint64_t zaehler_s = 3;
+	//char pistring[12];
+	//uint32_t fivehundertmillisecondscounter = 0;
  for (;;) {	
-	 if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
+	// if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
 	 piN = piN+(4.0/(pow(zaehler_s,3)-zaehler_s));
 	 zaehler_s += 2;
 	 piN = piN-(4.0/(pow(zaehler_s,3)-zaehler_s));
 	 zaehler_s += 2;
-	 pi_n = piN;}	
+	 pi_n = piN;	
+	 vTaskDelay(10/portTICK_RATE_MS);
+		}
+	// }
+}
+	 	//if((xEventGroupGetBits(EventGroupPiCalc) & UebertragungsReset) == UebertragungsReset) {
+			//xEventGroupClearBits(EventGroupPiCalc, UebertragungsReset);
+		 	//pi_x = 0;
+	 		//}
+	 	//EventBits_t bits = xEventGroupGetBits(EventGroupPiCalc);
+	 	//if((bits & Datensperren) != 0) {
+		 	//xEventGroupSetBits(EventGroupPiCalc, daten_bereit);
+		 	//xEventGroupWaitBits(EventGroupPiCalc, daten_cleared, pdTRUE, pdFALSE, portMAX_DELAY);
+	 	//}
+	 	//datenuebertragung = pi_x;
+	 	//vTaskDelay(10/portTICK_RATE_MS);
+ 		//}
+ 
 	// informiere_task();
 	 //warte_hier();
- }
-}
+	 	//if (fivehundertmillisecondscounter == 0){
+			//vDisplayClear();
+			//vDisplayWriteStringAtPos(0,0,"Nilakantha-Task");
+			//sprintf(&pistring[0], "PI: %.8f", pi_x);
+			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
+			////sprintf(&pistring[0], "PI_N: %.8f", pi_n);
+			////vDisplayWriteStringAtPos(2,0, "%s", pistring);
+			//fivehundertmillisecondscounter = 50;
+		//} else {
+			//fivehundertmillisecondscounter --;
+		//}
+ //}
+//}
 
 
 void controllerTask(void* pvParameters) {
@@ -132,39 +180,33 @@ void controllerTask(void* pvParameters) {
 	initButtons();
 	for(;;) {
 		updateButtons();
-		//if (xSemaphoreTake(MeinMutex,10/portTICK_RATE_MS) == pdTRUE) {
-					//pi_l = Datenuebertragung;
-					//xSemaphoreGive(MeinMutex);
-				//}
 		if (fivehundertmillisecondscounter == 0){
-			vDisplayClear();
-			sprintf(&pistring[0], "PI_L: %.8f", pi_l);
-			vDisplayWriteStringAtPos(1,0, "%s", pistring);
-			sprintf(&pistring[0], "PI_N: %.8f", pi_n);
-			vDisplayWriteStringAtPos(2,0, "%s", pistring);
-			fivehundertmillisecondscounter = 50;
-		} else {
-			fivehundertmillisecondscounter --;
-		}
+			//xEventGroupSetBits(EventGroupPiCalc, Datensperren);
+			//xEventGroupWaitBits(EventGroupPiCalc, daten_bereit, pdTRUE, pdFALSE, portMAX_DELAY);
+			//pi_x = datenuebertragung;
+			//xEventGroupClearBits(EventGroupPiCalc, Datensperren);
+			//xEventGroupSetBits(EventGroupPiCalc, daten_cleared);
+				vDisplayClear();
+				vDisplayWriteStringAtPos(0,0,"PI-Calc FS2022");
+				sprintf(&pistring[0], "PI_L: %.8f", pi_l);
+				vDisplayWriteStringAtPos(1,0, "%s", pistring);
+				sprintf(&pistring[0], "PI_N: %.8f", pi_n);
+				vDisplayWriteStringAtPos(2,0, "%s", pistring);
+				fivehundertmillisecondscounter = 50;
+			} else {
+				fivehundertmillisecondscounter --;
+			}
 				//vDisplayClear();		
 		//vDisplayWriteStringAtPos(0,0, "MeineVariabe: %d",localy);		
 		//vTaskDelay(200/portTICK_RATE_MS);
 		if(getButtonPress(BUTTON1) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, StartTask);
-				//vDisplayClear();
-				//sprintf(&pistring[0], "PI_L: %.8f", pi_l);
-				//vDisplayWriteStringAtPos(0,0, "Leibniz-Task");
-				//vDisplayWriteStringAtPos(1,0, "%s", pistring);			
-			//xEventGroupSetBits(EventGroupPiCalc,StartTask);
 
-			
-			//char pistring[12];
-			//sprintf(&pistring[0], "PI: %.8f", M_PI);
-			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
 		}
 		if(getButtonPress(BUTTON2) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, StopTask);
 			xEventGroupClearBits(EventGroupPiCalc, StartTask);
+		}
 							//vDisplayClear();
 				//sprintf(&pistring[0], "PI_L: %.8f", pi_n);
 				//vDisplayWriteStringAtPos(0,0, "Nilakantha-Task");
@@ -178,24 +220,31 @@ void controllerTask(void* pvParameters) {
 		//} else {
 			//fivehundertmillisecondscounter --;
 		//}
-		}
+		//}
 		if(getButtonPress(BUTTON3) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, ResetTask);
 			xEventGroupClearBits(EventGroupPiCalc, StopTask);
 			xEventGroupClearBits(EventGroupPiCalc, StartTask);
-			xEventGroupClearBits(EventGroupPiCalc, WechsleTask);
+			xEventGroupClearBits(EventGroupPiCalc, WechsleLeibniz);
+			xEventGroupClearBits(EventGroupPiCalc, WechsleNilakantha);
 					//if (fivehundertmillisecondscounter == 0){
-			//vDisplayClear();
+			vDisplayClear();
 			//sprintf(&pistring[0], "PI: %.8f", pi_s);
-			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
+			vDisplayWriteStringAtPos(1,0, "Reset");
 			//fivehundertmillisecondscounter = 50;
 		//} else {
 			//fivehundertmillisecondscounter --;
 		//}
 		}
 		if(getButtonPress(BUTTON4) == SHORT_PRESSED) {
-		xEventGroupSetBits(EventGroupPiCalc, WechsleTask);
-
+			uint8_t algostatus = (xEventGroupGetBits(EventGroupPiCalc) & 0x4000 ) >> 8;
+			if(algostatus == 0x01) {
+				xEventGroupClearBits(EventGroupPiCalc, WechsleLeibniz);
+				xEventGroupSetBits(EventGroupPiCalc, WechsleNilakantha);
+			} else {
+				xEventGroupClearBits(EventGroupPiCalc, WechsleNilakantha);
+				xEventGroupSetBits(EventGroupPiCalc, WechsleLeibniz);
+			}
 		}
 		if(getButtonPress(BUTTON1) == LONG_PRESSED) {
 			
@@ -210,46 +259,7 @@ void controllerTask(void* pvParameters) {
 			
 		}
 		vTaskDelay(10/portTICK_RATE_MS);
+		}
 	}
-}
-
-
-////Mutex ausprobieren
-//void task1(void *pvParameters) {
-	//uint8_t localx = 0;
-	//for (;;) {
-		//localx++;
-		//if xSemaphoreTake(MeinMutex,10/portTICK_RATE_MS) == pdTRUE {
-			//meinevariable = localx;
-			//xSemaphoreGive(MeinMutex);
-		//}
-		//
-		//
-		//
-		//vTaskDelay(10/portTICK_RATE_MS);
-	//}
-//}
-//void task2(void *pvParameters) {
-	//uint8_t localy =0;
-	//for (;;) {
-				//if (xSemaphoreTake(MeinMutex,10/portTICK_RATE_MS) == pdTRUE) {
-					//localy = meinevariable;
-					//xSemaphoreGive(MeinMutex);
-				//}
-		//vDisplayClear();		
-		//vDisplayWriteStringAtPos(0,0, "MeineVariabe: %d",localy);		
-		//vTaskDelay(200/portTICK_RATE_MS);
-	//}
-//}
-//
-//#define LOCK_DATA	1<<0
-//#define LOCK_DATA	1<<1
-//void task3(void*pvParameters){
-	//
-	//for(;;){
-		//
-		//vTaskDelay(10/portTICK_RATE_MS);
-	//}
-	//
-//}
-//versuch
+		
+	

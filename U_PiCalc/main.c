@@ -36,8 +36,9 @@ float pi;
 float pi_x;
 float piN;
 float pi_l;
-float64_t pi_n;
+float pi_n;
 uint32_t datenuebertragung;
+TickType_t xStart, xEnd, xDifference;
 
 //Eventgroup erstellen
 EventGroupHandle_t EventGroupPiCalc;
@@ -70,7 +71,7 @@ int main(void)
 	//die unterschiedlichen Tasks
 	xTaskCreate( controllerTask, (const char *) "control_tsk", configMINIMAL_STACK_SIZE+150, NULL, 3, NULL);
 	xTaskCreate( leibniz_task, (const char *) "leibniz_tsk", configMINIMAL_STACK_SIZE+150, NULL, 1, NULL);
-	xTaskCreate( Nilakantha_task, (const char *) "Somayaji_tsk", configMINIMAL_STACK_SIZE+150, NULL, 1, NULL);
+	xTaskCreate( Nilakantha_task, (const char *) "Nilakantha_tsk", configMINIMAL_STACK_SIZE+150, NULL, 1, NULL);
 //	xTaskCreate( vButtonTask, (const char *) "buttonTask", configMINIMAL_STACK_SIZE+50, NULL, 1, NULL);
 
 	vDisplayClear();
@@ -83,31 +84,32 @@ int main(void)
 void leibniz_task(void* pvParameters){
 	pi4 = 1;
 	uint32_t zaehler = 3;
-	float pi = 0;
-	//char pistring[12];
-	//uint32_t fivehundertmillisecondscounter = 0;
+	//float pi = 0;
+	//xStart = xTaskGetTickCount();
  for (;;) {
 	//action = xEventGroupWaitBits (EventGroupPiCalc, StartLeibniz,pdTRUE,pdFALSE, portMAX_DELAY);
 	//if ((action & StartLeibniz) !=0 ){
-	//if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
+	if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
 		pi4 = pi4-(1.0/zaehler);
 		 zaehler += 2;
 		pi4 = pi4 +(1.0/zaehler);
 		zaehler += 2;
 		pi_l = pi4*4;	
-		vTaskDelay(10/portTICK_RATE_MS);
-		//}
+		//xEnd = xTaskGetTickCount();
+		//xDifference = xEnd - xStart;
+		//vTaskDelay(10/portTICK_RATE_MS);
+		}
 	}
  }
-	
-		//vDisplayClear();
-		//vDisplayWriteStringAtPos(0,0,"Leibniz-Task");
-			//vDisplayClear();
-			//vDisplayWriteStringAtPos(0,0,"Leibniz-Task");
-			//sprintf(&pistring[0], "PI: %.8f", pi_x);
-			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
-			//sprintf(&pistring[0], "PI_N: %.8f", pi_n);
-			//vDisplayWriteStringAtPos(2,0, "%s", pistring);
+     //TickTypet xStart, xEnd, xDifference;
+    //for( ;; )
+    //{
+        //xStart = xTaskGetTickCount();
+        //vTaskDelay( pdMSTO_TICKS( 1000UL ) );
+        //xEnd = xTaskGetTickCount();
+        //xDifference = xEnd – xStart;
+        //printf( “Time diff: %lu ticksn”, xDifference );
+    //}
 
 		// else {
 		//if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
@@ -130,19 +132,18 @@ void leibniz_task(void* pvParameters){
 
 void Nilakantha_task(void* pvParameters){
 	piN = 3;
-	uint64_t zaehler_s = 3;
-	//char pistring[12];
-	//uint32_t fivehundertmillisecondscounter = 0;
+	uint32_t zaehler_s = 3;
+	//volatile TickType_t xTaskGetTickCount( void );
  for (;;) {	
-	// if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
-	 piN = piN+(4.0/(pow(zaehler_s,3)-zaehler_s));
-	 zaehler_s += 2;
-	 piN = piN-(4.0/(pow(zaehler_s,3)-zaehler_s));
-	 zaehler_s += 2;
-	 pi_n = piN;	
-	 vTaskDelay(10/portTICK_RATE_MS);
+	 if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
+		 piN = piN+(4.0/(pow(zaehler_s,3)-zaehler_s));
+		 zaehler_s += 2;
+		 piN = piN-(4.0/(pow(zaehler_s,3)-zaehler_s));
+		 zaehler_s += 2;
+		 pi_n = piN;	
+		// vTaskDelay(10/portTICK_RATE_MS);
 		}
-	// }
+	 }
 }
 	 	//if((xEventGroupGetBits(EventGroupPiCalc) & UebertragungsReset) == UebertragungsReset) {
 			//xEventGroupClearBits(EventGroupPiCalc, UebertragungsReset);
@@ -159,19 +160,7 @@ void Nilakantha_task(void* pvParameters){
  
 	// informiere_task();
 	 //warte_hier();
-	 	//if (fivehundertmillisecondscounter == 0){
-			//vDisplayClear();
-			//vDisplayWriteStringAtPos(0,0,"Nilakantha-Task");
-			//sprintf(&pistring[0], "PI: %.8f", pi_x);
-			//vDisplayWriteStringAtPos(1,0, "%s", pistring);
-			////sprintf(&pistring[0], "PI_N: %.8f", pi_n);
-			////vDisplayWriteStringAtPos(2,0, "%s", pistring);
-			//fivehundertmillisecondscounter = 50;
-		//} else {
-			//fivehundertmillisecondscounter --;
-		//}
- //}
-//}
+
 
 
 void controllerTask(void* pvParameters) {
@@ -186,12 +175,21 @@ void controllerTask(void* pvParameters) {
 			//pi_x = datenuebertragung;
 			//xEventGroupClearBits(EventGroupPiCalc, Datensperren);
 			//xEventGroupSetBits(EventGroupPiCalc, daten_cleared);
+				if((xEventGroupGetBits(EventGroupPiCalc)&WechsleLeibniz)){
 				vDisplayClear();
 				vDisplayWriteStringAtPos(0,0,"PI-Calc FS2022");
+				vDisplayWriteStringAtPos(1,0,"Leibniz-Algo");
 				sprintf(&pistring[0], "PI_L: %.8f", pi_l);
-				vDisplayWriteStringAtPos(1,0, "%s", pistring);
+				vDisplayWriteStringAtPos(2,0, "%s", pistring);
+				//vDisplayWriteStringAtPos(3,0, "Zeit: %s", xDifference);
+				//printf( “Time diff: %lu ticksn”, xDifference );
+				} else {
+				vDisplayClear();
+				vDisplayWriteStringAtPos(0,0,"PI-Calc FS2022");
+				vDisplayWriteStringAtPos(1,0,"Nilakantha-Algo");
 				sprintf(&pistring[0], "PI_N: %.8f", pi_n);
 				vDisplayWriteStringAtPos(2,0, "%s", pistring);
+				}
 				fivehundertmillisecondscounter = 50;
 			} else {
 				fivehundertmillisecondscounter --;
@@ -227,17 +225,15 @@ void controllerTask(void* pvParameters) {
 			xEventGroupClearBits(EventGroupPiCalc, StartTask);
 			xEventGroupClearBits(EventGroupPiCalc, WechsleLeibniz);
 			xEventGroupClearBits(EventGroupPiCalc, WechsleNilakantha);
-					//if (fivehundertmillisecondscounter == 0){
+			pi_l = 0;
+			pi_n = 0;
 			vDisplayClear();
-			//sprintf(&pistring[0], "PI: %.8f", pi_s);
-			vDisplayWriteStringAtPos(1,0, "Reset");
-			//fivehundertmillisecondscounter = 50;
-		//} else {
-			//fivehundertmillisecondscounter --;
-		//}
+			vDisplayWriteStringAtPos(4,0, "Reset");
+		//	vTaskDelay(10/portTICK_RATE_MS);
 		}
+		
 		if(getButtonPress(BUTTON4) == SHORT_PRESSED) {
-			uint8_t algostatus = (xEventGroupGetBits(EventGroupPiCalc) & 0x4000 ) >> 8;
+			uint8_t algostatus = (xEventGroupGetBits(EventGroupPiCalc) & 0x0018 ) >> 3;
 			if(algostatus == 0x01) {
 				xEventGroupClearBits(EventGroupPiCalc, WechsleLeibniz);
 				xEventGroupSetBits(EventGroupPiCalc, WechsleNilakantha);

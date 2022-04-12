@@ -85,20 +85,25 @@ void leibniz_task(void* pvParameters){
 	pi4 = 1;
 	uint32_t zaehler = 3;
 	//float pi = 0;
-	//xStart = xTaskGetTickCount();
+		//xStart = xTaskGetTickCount();
  for (;;) {
 	//action = xEventGroupWaitBits (EventGroupPiCalc, StartLeibniz,pdTRUE,pdFALSE, portMAX_DELAY);
 	//if ((action & StartLeibniz) !=0 ){
+	if((xEventGroupGetBits(EventGroupPiCalc)&ResetTask)){
+		//pi4 = 1;
+		//uint32_t zaehler = 3;
+		pi_l = 0;
+	} 
 	if((xEventGroupGetBits(EventGroupPiCalc)&StartTask)){
-		pi4 = pi4-(1.0/zaehler);
-		 zaehler += 2;
-		pi4 = pi4 +(1.0/zaehler);
-		zaehler += 2;
-		pi_l = pi4*4;	
+			pi4 = pi4-(1.0/zaehler);
+			zaehler += 2;
+			pi4 = pi4 +(1.0/zaehler);
+			zaehler += 2;
+			pi_l = pi4*4;	
 		//xEnd = xTaskGetTickCount();
 		//xDifference = xEnd - xStart;
-		//vTaskDelay(10/portTICK_RATE_MS);
-		}
+		
+	}
 	}
  }
      //TickTypet xStart, xEnd, xDifference;
@@ -141,7 +146,6 @@ void Nilakantha_task(void* pvParameters){
 		 piN = piN-(4.0/(pow(zaehler_s,3)-zaehler_s));
 		 zaehler_s += 2;
 		 pi_n = piN;	
-		// vTaskDelay(10/portTICK_RATE_MS);
 		}
 	 }
 }
@@ -184,11 +188,11 @@ void controllerTask(void* pvParameters) {
 				//vDisplayWriteStringAtPos(3,0, "Zeit: %s", xDifference);
 				//printf( “Time diff: %lu ticksn”, xDifference );
 				} else {
-				vDisplayClear();
-				vDisplayWriteStringAtPos(0,0,"PI-Calc FS2022");
-				vDisplayWriteStringAtPos(1,0,"Nilakantha-Algo");
-				sprintf(&pistring[0], "PI_N: %.8f", pi_n);
-				vDisplayWriteStringAtPos(2,0, "%s", pistring);
+					vDisplayClear();
+					vDisplayWriteStringAtPos(0,0,"PI-Calc FS2022");
+					vDisplayWriteStringAtPos(1,0,"Nilakantha-Algo");
+					sprintf(&pistring[0], "PI_N: %.8f", pi_n);
+					vDisplayWriteStringAtPos(2,0, "%s", pistring);
 				}
 				fivehundertmillisecondscounter = 50;
 			} else {
@@ -199,7 +203,8 @@ void controllerTask(void* pvParameters) {
 		//vTaskDelay(200/portTICK_RATE_MS);
 		if(getButtonPress(BUTTON1) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, StartTask);
-
+			xEventGroupClearBits(EventGroupPiCalc, ResetTask);
+			xStart = xTaskGetTickCount();
 		}
 		if(getButtonPress(BUTTON2) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, StopTask);

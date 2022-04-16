@@ -2,7 +2,7 @@
  * U_PiCalc_FS2022
  *
  * Created: 20.03.2018 18:32:07
- * Author : -
+ * Author : Lisa-Marie Gent
  */ 
 
 #include <math.h>
@@ -189,6 +189,7 @@ void controllerTask(void* pvParameters) {
 		if(getButtonPress(BUTTON1) == SHORT_PRESSED) {
 			xEventGroupSetBits(EventGroupPiCalc, StartTask);
 			xEventGroupClearBits(EventGroupPiCalc, ResetTask);
+			xEventGroupClearBits(EventGroupPiCalc, UebertragungsReset);
 			Zeit_Start = xTaskGetTickCount();
 			Zeit_Start_n = xTaskGetTickCount();
 		}

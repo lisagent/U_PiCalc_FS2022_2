@@ -85,7 +85,7 @@ void leibniz_task(void* pvParameters){
 	pi_nachkomma = 3.14160;
  for (;;) {
 	if((xEventGroupGetBits(EventGroupPiCalc)&ResetTask)){
-		pi4 = 0;
+		pi4 = 1;
 		uint32_t zaehler = 3;
 		pi_l = 0;
 	} 
@@ -129,20 +129,20 @@ void Nilakantha_task(void* pvParameters){
 		 piN = piN-(4.0/(pow(zaehler_s,3)-zaehler_s));
 		 zaehler_s += 2;
 		 pi_n = piN;
-		 if (pi_l < pi_nachkomma){
+		 if (pi_l > pi_nachkomma){
 			Zeit_End_n = xTaskGetTickCount();
 			Zeit_Difference_n = Zeit_End_n - Zeit_Start_n;
 		 	}	
 		 	//if((xEventGroupGetBits(EventGroupPiCalc) & UebertragungsReset) == UebertragungsReset) {
-		 		//xEventGroupClearBits(EventGroupPiCalc, UebertragungsReset);
-		 		//pi_x = 0;
-		 		//}
+			 	//xEventGroupClearBits(EventGroupPiCalc, UebertragungsReset);
+			 	//pi_x = 0;
+		 	//}
 		 	//EventBits_t bits = xEventGroupGetBits(EventGroupPiCalc);
-		 		//if((bits & Datensperren) != 0) {
-		 			//xEventGroupSetBits(EventGroupPiCalc, daten_bereit);
-		 			//xEventGroupWaitBits(EventGroupPiCalc, daten_cleared, pdTRUE, pdFALSE, portMAX_DELAY);
-					//}
-		 	//datenuebertragung = pi_x;	
+		 	//if((bits & Datensperren) != 0) {
+			 	//xEventGroupSetBits(EventGroupPiCalc, daten_bereit);
+			 	//xEventGroupWaitBits(EventGroupPiCalc, daten_cleared, pdTRUE, pdFALSE, portMAX_DELAY);
+		 	//}
+		 	//datenuebertragung = pi_x;
 		}
 	 }
 }
@@ -152,8 +152,8 @@ void Nilakantha_task(void* pvParameters){
 
 void controllerTask(void* pvParameters) {
 	char pistring[12];
-	uint64_t pistring1[12];
-	uint64_t pistring2[12];
+	char pistring1[12];
+	char pistring2[12];
 	uint32_t fivehundertmillisecondscounter = 0;
 	initButtons();
 	for(;;) {
@@ -170,7 +170,7 @@ void controllerTask(void* pvParameters) {
 				vDisplayWriteStringAtPos(1,0,"Leibniz-Algo");
 				sprintf(&pistring[0], "PI_L: %.8f", pi_l);
 				vDisplayWriteStringAtPos(2,0, "%s", pistring);
-				sprintf(&pistring1[0], "Zeit: %s", Zeit_Difference);
+				sprintf(&pistring1[0], "Zeit: %lu ms", Zeit_Difference);
 				vDisplayWriteStringAtPos(3,0, "%s", pistring1);
 				} else {
 					vDisplayClear();
@@ -178,7 +178,7 @@ void controllerTask(void* pvParameters) {
 					vDisplayWriteStringAtPos(1,0,"Nilakantha-Algo");
 					sprintf(&pistring[0], "PI_N: %.8f", pi_n);
 					vDisplayWriteStringAtPos(2,0, "%s", pistring);
-					sprintf(&pistring2[0], "Zeit: %s", Zeit_Difference_n);
+					sprintf(&pistring2[0], "Zeit: %lu ms", Zeit_Difference_n);
 					vDisplayWriteStringAtPos(3,0, "%s", pistring2);
 				}
 				fivehundertmillisecondscounter = 50;
